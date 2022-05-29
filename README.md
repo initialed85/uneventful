@@ -24,7 +24,6 @@ pub/sub event framework in the process.
 
 - Get domain writers to re-achieve their state on bootup by replaying their events
 - Get domain writers to push their starting state to Redis
-- Change from TimescaleDB to Dqlite or SQLite
 
 ## Prerequisites
 
