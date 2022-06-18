@@ -22,9 +22,9 @@ pub/sub event framework in the process.
 
 ## TODO
 
-- Get domain writers to re-achieve their state on bootup by replaying their events
 - Get domain writers to push their starting state to Redis
-- Change from TimescaleDB to Dqlite or SQLite
+- Get domain writers to re-achieve their state on bootup by replaying their events
+- Add /healthz endpoint for all services
 
 ## Prerequisites
 
@@ -34,6 +34,11 @@ pub/sub event framework in the process.
 - Redis CLI
 - cURL
 - jq
+
+And optionally for the utilities / integration tests:
+
+- Python3.9+
+- Virtualenv
 
 ## Usage
 
@@ -67,28 +72,28 @@ Assuming you've got everything up and running, open a bunch of shells as follows
 while true; do clear; redis-cli GET wallet.28skwt5B8zTrs6AqBWrSgCHLcRL | jq; sleep 1; done
 ```
 
-#### Shell 2 - Write event log for Wallet domain (from TimescaleDB)
+#### Shell 2 - Write event log for Wallet domain (from SQLite)
 
 ```shell
-while true; do clear; ./docker_compose.sh exec wallet_writer_datastore psql -U postgres datastore -c 'SELECT * FROM event;'; sleep 1; done
+while true; do clear; ./docker-compose.sh exec wallet_writer_service sqlite3 /var/lib/sqlite/data/datastore.db -line 'SELECT * FROM event;'; sleep 1; done
 ```
 
-#### Shell 3 - Write state log for Wallet domain (from TimescaleDB)
+#### Shell 3 - Write state log for Wallet domain (from SQLite)
 
 ```shell
-while true; do clear; ./docker_compose.sh exec wallet_writer_datastore psql -U postgres datastore -c 'SELECT * FROM state;'; sleep 1; done
+while true; do clear; ./docker-compose.sh exec wallet_writer_service sqlite3 /var/lib/sqlite/data/datastore.db -line 'SELECT * FROM state;'; sleep 1; done
 ```
 
 #### Shell 4 - Balance (user-facing read state) for Wallet domain
 
 ```shell
-while true; do clear; curl http://localhost/wallet/28skwt5B8zTrs6AqBWrSgCHLcRL/balance | jq; sleep 1; done
+while true; do clear; curl -s http://localhost/wallet/28skwt5B8zTrs6AqBWrSgCHLcRL/balance | jq; sleep 1; done
 ```
 
 #### Shell 5 - Transactions (user-facing read state) for Wallet domain
 
 ```shell
-while true; do clear; curl http://localhost/wallet/28skwt5B8zTrs6AqBWrSgCHLcRL/transactions | jq; sleep 1; done
+while true; do clear; curl -s http://localhost/wallet/28skwt5B8zTrs6AqBWrSgCHLcRL/transactions | jq; sleep 1; done
 ```
 
 #### Shell 6 - Let's cause some changes
@@ -119,15 +124,27 @@ Observations in the other shell windows:
 - Balance updates appropriately
 - Transactions update appropriately
 
+If you really wanna pummel the system, set yourself up with a Virtualenv, install `requirements.txt` and run the following:
+
+```shell
+python -m utils.curl -s --loop --workers 64 --period 0 http://localhost/wallet/28skwt5B8zTrs6AqBWrSgCHLcRL/balance
+```
+
+This will spin up 64 threads all requesting the balance as fast as they can- I get maybe 250 to 350 requests per second on my Macbook Pro
+and as far as I can tell, the system is the limiting factor- attempts to add more workers or more entire instances of that command
+see requests per second reduced.
+
+Not sure where the bottleneck is- no single container is working particularly hard, maybe it's just Docker for Mac things.
+
 ### How does it work?
 
 #### Service breakdown
 
 - `message_broker` = NATS for pub/sub glue
 - `cache` = Redis for caching read state
-- `history_writer_datastore` = TimescaleDB for storing global event logs
+- `history_writer_datastore` = SQLite for storing global event logs
 - `history_writer_service` = Go code to record global write events
-- `wallet_writer_datastore` = TimescaleDB for storing event logs and state logs
+- `wallet_writer_datastore` = SQLite for storing event logs and state logs
 - `wallet_writer_service` = Go code to handle write events
 - `wallet_server_service` = Go code to expose read state
 

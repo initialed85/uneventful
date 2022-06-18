@@ -2,4 +2,4 @@
 
 set -e
 
-./docker_compose.sh pull --parallel
+./docker-compose.sh pull --parallel

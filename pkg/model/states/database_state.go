@@ -2,6 +2,7 @@ package states
 
 import (
 	"fmt"
+	"github.com/initialed85/uneventful/internal/helpers"
 	"github.com/jackc/pgtype"
 	"gorm.io/gorm"
 	"time"
@@ -58,7 +59,17 @@ func Migrate(db *gorm.DB) error {
 	}
 
 	db.Exec(fmt.Sprintf(createUniqueIndexSQL, tableName))
-	db.Exec(fmt.Sprintf(createdHypertableSQL, tableName))
+
+	db.Exec(fmt.Sprintf(createUniqueIndexSQL, tableName))
+
+	useSQLite, err := helpers.GetEnvironmentVariable("USE_SQLITE", false, "0")
+	if err != nil {
+		return err
+	}
+
+	if useSQLite != "1" {
+		db.Exec(fmt.Sprintf(createdHypertableSQL, tableName))
+	}
 
 	return nil
 }

@@ -1,7 +1,7 @@
 volumes:
   cache:
-  wallet_writer_data:
   history_writer_data:
+  wallet_writer_data:
 
 services:
 
@@ -35,17 +35,17 @@ services:
   # global event log
   #
 
-  history_writer_datastore:
-    restart: always
-    build:
-      context: ../
-      dockerfile: ./docker/datastore/Dockerfile
-    volumes:
-      - history_writer_data:/var/lib/postgresql/data
-    environment:
-      TIMESCALEDB_TELEMETRY: "off"
-      POSTGRES_PASSWORD: "Password1"
-      POSTGRES_DB: "datastore"
+  # history_writer_datastore:
+  #   restart: always
+  #   build:
+  #     context: ../
+  #     dockerfile: ./docker/datastore/Dockerfile
+  #   volumes:
+  #     - history_writer_data:/var/lib/postgresql/data
+  #   environment:
+  #     TIMESCALEDB_TELEMETRY: "off"
+  #     POSTGRES_PASSWORD: "Password1"
+  #     POSTGRES_DB: "datastore"
 
   history_writer_service:
     restart: always
@@ -55,12 +55,15 @@ services:
       dockerfile: ./docker/service/Dockerfile
       args:
         - CMD_NAME=history_writer
+    volumes:
+      - history_writer_data:/var/lib/sqlite/data
     environment:
+      USE_SQLITE: "1"
       POSTGRES_HOST: "history_writer_datastore"
       ENTITY_ID: "29p8aA0XrY2slsqmEyNzBlS7f64"
     depends_on:
-      history_writer_datastore:
-        condition: service_healthy
+      # history_writer_datastore:
+      #   condition: service_healthy
       message_broker:
         condition: service_healthy
       cache:
@@ -70,17 +73,17 @@ services:
   # wallet domain
   #
 
-  wallet_writer_datastore:
-    restart: always
-    build:
-      context: ../
-      dockerfile: ./docker/datastore/Dockerfile
-    volumes:
-      - wallet_writer_data:/var/lib/postgresql/data
-    environment:
-      TIMESCALEDB_TELEMETRY: "off"
-      POSTGRES_PASSWORD: "Password1"
-      POSTGRES_DB: "datastore"
+  # wallet_writer_datastore:
+  #   restart: always
+  #   build:
+  #     context: ../
+  #     dockerfile: ./docker/datastore/Dockerfile
+  #   volumes:
+  #     - wallet_writer_data:/var/lib/postgresql/data
+  #   environment:
+  #     TIMESCALEDB_TELEMETRY: "off"
+  #     POSTGRES_PASSWORD: "Password1"
+  #     POSTGRES_DB: "datastore"
 
   wallet_writer_service:
     restart: always
@@ -90,12 +93,15 @@ services:
       dockerfile: ./docker/service/Dockerfile
       args:
         - CMD_NAME=wallet_writer
+    volumes:
+      - wallet_writer_data:/var/lib/sqlite/data
     environment:
+      USE_SQLITE: "1"
       POSTGRES_HOST: "wallet_writer_datastore"
       ENTITY_ID: "28skwt5B8zTrs6AqBWrSgCHLcRL"
     depends_on:
-      wallet_writer_datastore:
-        condition: service_healthy
+      # wallet_writer_datastore:
+      #   condition: service_healthy
       message_broker:
         condition: service_healthy
       cache:
@@ -109,10 +115,24 @@ services:
       dockerfile: ./docker/service/Dockerfile
       args:
         - CMD_NAME=wallet_server
-    ports:
-      - "80:80/tcp"
     depends_on:
       message_broker:
         condition: service_healthy
       cache:
         condition: service_healthy
+    # TODO: this makes wallet_server_service a load balancer for basically all incoming network traffic (even ping)
+    deploy:
+      replicas: 2
+
+  router:
+    restart: always
+    build:
+      context: ../
+      dockerfile: ./docker/router/Dockerfile
+    volumes:
+      - ./router/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80/tcp"
+    # depends_on:
+    #   wallet_server_service:
+    #     condition: service_healthy
