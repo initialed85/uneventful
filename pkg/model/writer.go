@@ -30,7 +30,7 @@ type Writer struct {
 	ignoreEventTypeName  bool
 	handleEvents         bool
 	subscription         *nats.Subscription
-	mu                   sync.Mutex
+	mu, dbMu             sync.Mutex
 	name                 string
 	entityID             ksuid.KSUID
 	eventHandler         func(event *events.Event, request *calls.Request) error
@@ -226,7 +226,9 @@ func (w *Writer) handler(msg *nats.Msg) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
+	w.dbMu.Lock()
 	_, err = databaseEvent.Create(db)
+	w.dbMu.Unlock()
 	if err != nil {
 		log.Printf("%v - warning: %v", w.name, err)
 		return
@@ -238,7 +240,9 @@ func (w *Writer) handler(msg *nats.Msg) {
 
 	err = w.eventHandler(event, request)
 	if err != nil {
+		w.dbMu.Lock()
 		_, deleteErr := databaseEvent.Delete(db)
+		w.dbMu.Unlock()
 		if deleteErr != nil {
 			err = fmt.Errorf(
 				"event handler caused %v requiring event deletion which caused %v",
@@ -259,7 +263,9 @@ func (w *Writer) handler(msg *nats.Msg) {
 
 	// if this happens we're goosed- we've already handled the event yet for some reason we can't
 	// update that status in the database
+	w.dbMu.Lock()
 	_, err = databaseEvent.Update(db)
+	w.dbMu.Unlock()
 	if err != nil {
 		log.Printf("%v - warning: %v", w.name, err)
 		return
@@ -295,7 +301,9 @@ func (w *Writer) SetState(
 		return err
 	}
 
+	w.dbMu.Lock()
 	_, err = databaseState.Create(db)
+	w.dbMu.Unlock()
 	if err != nil {
 		return err
 	}
@@ -309,7 +317,9 @@ func (w *Writer) SetState(
 		time.Duration(0),
 	).Err()
 	if err != nil {
+		w.dbMu.Lock()
 		_, deleteErr := databaseState.Delete(db)
+		w.dbMu.Unlock()
 		return fmt.Errorf(
 			"redis client caused %v required state deletion which caused %v",
 			err,

@@ -22,6 +22,9 @@ pub/sub event framework in the process.
 
 ## TODO
 
+- Find out why SQLite falls over (and doesn't recover) when you pummel the writer
+    - Okay, it's because I had the `sqlite3` shell loops running- need to work out how to get the server to recover though (basically one
+      instance of the database being busy locks it for good until manually recovered)
 - Get domain writers to push their starting state to Redis
 - Get domain writers to re-achieve their state on bootup by replaying their events
 - Add /healthz endpoint for all services
@@ -124,11 +127,17 @@ Observations in the other shell windows:
 - Balance updates appropriately
 - Transactions update appropriately
 
-If you really wanna pummel the system, set yourself up with a Virtualenv, install `requirements.txt` and run the following:
+If you really wanna pummel the system, set yourself up with a Virtualenv, install `requirements.txt` and try the following:
 
 ```shell
+# to smash the reads
 python -m utils.curl -s --loop --workers 64 --period 0 http://localhost/wallet/28skwt5B8zTrs6AqBWrSgCHLcRL/balance
+
+# to smash the writes
+python -m utils.curl --loop --workers 16 --period 0 -s -X POST -d '{"amount": 5}' http://localhost/wallet/28skwt5B8zTrs6AqBWrSgCHLcRL/credit
 ```
+
+NOTE: If you've still got shells running making `sqlite3` calls you'll like lock your database- cancel those first.
 
 This will spin up 64 threads all requesting the balance as fast as they can- I get maybe 250 to 350 requests per second on my Macbook Pro
 and as far as I can tell, the system is the limiting factor- attempts to add more workers or more entire instances of that command

@@ -24,12 +24,15 @@ def _work(
     with session as s:
         _method = getattr(s, method)
 
-        _ = _method(
+        r = _method(
             url=url,
             headers=headers,
-            data=data,
+            data=json.dumps(data),
             timeout=5,
         )
+
+        if r.status_code not in (200, 201):
+            print(r.text)
 
         with _lock:
             _count += 1
