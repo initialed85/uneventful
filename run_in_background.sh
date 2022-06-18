@@ -2,4 +2,4 @@
 
 set -e
 
-./docker_compose.sh up -d "${@}"
+./docker-compose.sh up -d "${@}"
