@@ -11,9 +11,7 @@ func GetRedisClient() (redisClient *redis.Client, err error) {
 		return nil, err
 	}
 
-	redisClient = redis.NewClient(&redis.Options{
-		Addr: redisURL,
-	})
+	redisClient = redis.NewClient(&redis.Options{Addr: redisURL})
 
 	return redisClient, nil
 }

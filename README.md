@@ -25,8 +25,6 @@ pub/sub event framework in the process.
 - Find out why SQLite falls over (and doesn't recover) when you pummel the writer
     - Okay, it's because I had the `sqlite3` shell loops running- need to work out how to get the server to recover though (basically one
       instance of the database being busy locks it for good until manually recovered)
-- Get domain writers to push their starting state to Redis
-- Get domain writers to re-achieve their state on bootup by replaying their events
 - Add /healthz endpoint for all services
 
 ## Prerequisites

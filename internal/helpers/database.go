@@ -16,10 +16,7 @@ func GetDatabase() (db *gorm.DB, err error) {
 	}
 
 	if useSQLite == "1" {
-		db, err = gorm.Open(
-			sqlite.Open("/var/lib/sqlite/data/datastore.db"),
-			&gorm.Config{},
-		)
+		db, err = gorm.Open(sqlite.Open("/var/lib/sqlite/data/datastore.db"), &gorm.Config{})
 	} else {
 		postgresHost, err := GetEnvironmentVariable("POSTGRES_HOST", true, "")
 		if err != nil {
@@ -46,15 +43,9 @@ func GetDatabase() (db *gorm.DB, err error) {
 			log.Fatal(err)
 		}
 
-		dsn := fmt.Sprintf(
-			"host=%v port=%v user=%v password=%v dbname=%v sslmode=disable TimeZone=Australia/Perth",
-			postgresHost, postgresPort, postgresUser, postgresPassword, postgresDatabase,
-		)
+		dsn := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=disable TimeZone=Australia/Perth", postgresHost, postgresPort, postgresUser, postgresPassword, postgresDatabase)
 
-		db, err = gorm.Open(
-			postgres.Open(dsn),
-			&gorm.Config{},
-		)
+		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	}
 
 	if err != nil {

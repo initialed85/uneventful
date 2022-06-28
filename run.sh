@@ -3,7 +3,8 @@
 set -e
 
 function cleanup() {
-  ./docker-compose.sh down --remove-orphans --volumes
+  # ./docker-compose.sh down --remove-orphans --volumes
+  ./docker-compose.sh down --remove-orphans
 }
 trap cleanup exit
 

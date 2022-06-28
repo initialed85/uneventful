@@ -9,11 +9,7 @@ import (
 	"syscall"
 )
 
-func GetEnvironmentVariable(
-	key string,
-	required bool,
-	defaultValue string,
-) (string, error) {
+func GetEnvironmentVariable(key string, required bool, defaultValue string) (string, error) {
 	value := strings.TrimSpace(os.Getenv(key))
 	if value == "" {
 		if required {
@@ -31,15 +27,11 @@ func WaitForSigInt() {
 	<-c
 }
 
-func GetEntityIDFromString(
-	entityID string,
-) (ksuid.KSUID, error) {
+func GetEntityIDFromString(entityID string) (ksuid.KSUID, error) {
 	return ksuid.Parse(entityID)
 }
 
-func GetEntityIDFromEnvironmentVariable(
-	prefix string,
-) (ksuid.KSUID, error) {
+func GetEntityIDFromEnvironmentVariable(prefix string) (ksuid.KSUID, error) {
 	key := "ENTITY_ID"
 
 	prefix = strings.TrimSpace(prefix)

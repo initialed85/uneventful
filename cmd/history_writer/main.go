@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/initialed85/uneventful/internal/helpers"
-	"github.com/initialed85/uneventful/pkg/domains/history"
-	"github.com/initialed85/uneventful/pkg/workers"
+	"github.com/initialed85/uneventful/pkg/applications/history"
+	"github.com/initialed85/uneventful/pkg/lifecycles"
 	"log"
 )
 
@@ -15,5 +15,5 @@ func main() {
 
 	writer := history.NewWriter(entityID)
 
-	workers.Run(writer)
+	lifecycles.Run(writer)
 }

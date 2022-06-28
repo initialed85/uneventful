@@ -11,10 +11,7 @@ func GetNatsConn() (natsConn *nats.Conn, err error) {
 		return nil, err
 	}
 
-	natsConn, err = nats.Connect(
-		natsURL,
-		nats.MaxReconnects(0),
-	)
+	natsConn, err = nats.Connect(natsURL, nats.MaxReconnects(0))
 	if err != nil {
 		return nil, err
 	}
