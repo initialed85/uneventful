@@ -17,9 +17,20 @@ type Writer struct {
 func NewWriter(entityID ksuid.KSUID) *Writer {
 	name := domainName
 
-	w := Writer{name: name, creditTypeName: fmt.Sprintf("%v.%v.credit", name, entityID.String()), debitTypeName: fmt.Sprintf("%v.%v.debit", name, entityID.String()), wallet: NewWallet(entityID)}
+	w := Writer{
+		name:           name,
+		creditTypeName: fmt.Sprintf("%v.%v.credit", name, entityID.String()),
+		debitTypeName:  fmt.Sprintf("%v.%v.debit", name, entityID.String()),
+		wallet:         NewWallet(entityID),
+	}
 
-	w.Writer = models.NewWriter(name, entityID)
+	w.Writer = models.NewWriter(
+		name,
+		entityID,
+		func() (interface{}, error) {
+			return w.wallet.state, nil
+		},
+	)
 
 	_ = w.Writer.AddHandler(credit, func(entityID ksuid.KSUID, requestBody interface{}) (interface{}, error) {
 		return w.call(entityID, requestBody, w.wallet.Credit)

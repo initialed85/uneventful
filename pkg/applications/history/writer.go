@@ -15,7 +15,18 @@ func NewWriter(entityID ksuid.KSUID) *Writer {
 
 	w := Writer{name: name}
 
-	w.Writer = models.NewWriterWithOverrides(name, entityID, "event.>", name, true, true, false)
+	w.Writer = models.NewWriterWithOverrides(
+		name,
+		entityID,
+		func() (interface{}, error) {
+			return nil, nil
+		},
+		"event.>",
+		name,
+		true,
+		true,
+		false,
+	)
 
 	return &w
 }

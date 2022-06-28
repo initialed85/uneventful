@@ -13,7 +13,6 @@ import (
 	"github.com/initialed85/uneventful/pkg/workers/redis_worker"
 	"github.com/nats-io/nats.go"
 	"github.com/segmentio/ksuid"
-	"gorm.io/gorm"
 	"log"
 	"strings"
 	"sync"
@@ -41,22 +40,58 @@ type WriterImplementation struct {
 	mu, dbMu             sync.Mutex
 	name                 string
 	entityID             ksuid.KSUID
+	getStateCallback     func() (interface{}, error)
 }
 
-func NewWriterWithOverrides(name string, entityID ksuid.KSUID, subject string, queue string, ignoreResponseNeeded bool, ignoreEventTypeName bool, handleEvents bool) *WriterImplementation {
+func NewWriterWithOverrides(
+	name string,
+	entityID ksuid.KSUID,
+	getStateCallback func() (interface{}, error),
+	subject string,
+	queue string,
+	ignoreResponseNeeded bool,
+	ignoreEventTypeName bool,
+	handleEvents bool,
+) *WriterImplementation {
 	workerName := fmt.Sprintf("writer_%v", name)
 
-	w := WriterImplementation{Handlers: NewHandlers(), databaseWorker: database_worker.New(workerName), redisWorker: redis_worker.New(workerName), natsWorker: nats_worker.New(workerName), subject: subject, queue: queue, ignoreResponseNeeded: ignoreResponseNeeded, ignoreEventTypeName: ignoreEventTypeName, handleEvents: handleEvents, name: name, entityID: entityID}
+	w := WriterImplementation{
+		Handlers:             NewHandlers(),
+		databaseWorker:       database_worker.New(workerName),
+		redisWorker:          redis_worker.New(workerName),
+		natsWorker:           nats_worker.New(workerName),
+		subject:              subject,
+		queue:                queue,
+		ignoreResponseNeeded: ignoreResponseNeeded,
+		ignoreEventTypeName:  ignoreEventTypeName,
+		handleEvents:         handleEvents,
+		name:                 name,
+		entityID:             entityID,
+		getStateCallback:     getStateCallback,
+	}
 
 	w.Worker = lifecycles.NewLazyWorker(workerName, w.setup, w.teardown)
 
 	return &w
 }
 
-func NewWriter(name string, entityID ksuid.KSUID) *WriterImplementation {
+func NewWriter(
+	name string,
+	entityID ksuid.KSUID,
+	getStateCallback func() (interface{}, error),
+) *WriterImplementation {
 	name = fmt.Sprintf("%v.%v", name, entityID.String())
 
-	return NewWriterWithOverrides(name, entityID, fmt.Sprintf("event.%v.*", name), name, false, false, true)
+	return NewWriterWithOverrides(
+		name,
+		entityID,
+		getStateCallback,
+		fmt.Sprintf("event.%v.*", name),
+		name,
+		false,
+		false,
+		true,
+	)
 }
 
 func (w *WriterImplementation) setup() (err error) {
@@ -96,7 +131,7 @@ func (w *WriterImplementation) setup() (err error) {
 			return err
 		}
 
-		err = w.handleRequestfromDatabasEvents(db, databaseEvents)
+		err = w.handleRequestfromDatabasEvents(databaseEvents)
 		if err != nil {
 			_ = lifecycles.Teardown(w.natsWorker, w.redisWorker, w.databaseWorker)
 			return err
@@ -150,7 +185,7 @@ func (w *WriterImplementation) responder(msg *nats.Msg, event *events.Event, err
 	}
 }
 
-func (w *WriterImplementation) handleRequestfromDatabasEvents(db *gorm.DB, databaseEvents []*events.DatabaseEvent) error {
+func (w *WriterImplementation) handleRequestfromDatabasEvents(databaseEvents []*events.DatabaseEvent) error {
 	if !w.handleEvents {
 		return nil
 	}
@@ -185,17 +220,17 @@ func (w *WriterImplementation) handleRequestfromDatabasEvents(db *gorm.DB, datab
 			return err
 		}
 
-		state, err = handler(sourceEntityID, requestData)
+		_, err = handler(sourceEntityID, requestData)
 		if err != nil {
 			return err
 		}
 	}
 
-	if len(databaseEvents) == 0 {
-		return nil
+	state, err = w.getStateCallback()
+	if err != nil {
+		return err
 	}
 
-	// TODO: let's hope this never happens, because we've already handled all the events
 	stateJSON, err = json.Marshal(state)
 	if err != nil {
 		return err
