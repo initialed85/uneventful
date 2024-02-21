@@ -2,10 +2,11 @@ package events
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/initialed85/uneventful/internal/helpers"
 	"github.com/jackc/pgtype"
 	"gorm.io/gorm"
-	"time"
 )
 
 type DatabaseEvent struct {

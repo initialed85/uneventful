@@ -9,44 +9,44 @@ pub/sub event framework in the process.
 
 ## Concepts
 
-- Domain
-    - A slice of functionality ideally centered around something real-world (e.g. `wallet`)
-- Entity
-    - An instance of something within a domain (e.g. `wallet.28sshuU4BSZ2RCJyTHt2CS5yVeQ`)
-- Server
-    - The user-facing HTTP entrypoint into a domain (e.g. `http://wallet_server/wallet/28sshuU4BSZ2RCJyTHt2CS5yVeQ/balance`)
-- Writer
-    - The write path for an entity in a domain (e.g. `nats://message_broker:4222/event.wallet.28sshuU4BSZ2RCJyTHt2CS5yVeQ.credit`)
-- Reader
-    - The read path for an entity in a domain (e.g. `redis://cache:6379/event.wallet.28sshuU4BSZ2RCJyTHt2CS5yVeQ.balance`)
+-   Domain
+    -   A slice of functionality ideally centered around something real-world (e.g. `wallet`)
+-   Entity
+    -   An instance of something within a domain (e.g. `wallet.28sshuU4BSZ2RCJyTHt2CS5yVeQ`)
+-   Server
+    -   The user-facing HTTP entrypoint into a domain (e.g. `http://wallet_server/wallet/28sshuU4BSZ2RCJyTHt2CS5yVeQ/balance`)
+-   Writer
+    -   The write path for an entity in a domain (e.g. `nats://message_broker:4222/event.wallet.28sshuU4BSZ2RCJyTHt2CS5yVeQ.credit`)
+-   Reader
+    -   The read path for an entity in a domain (e.g. `redis://cache:6379/event.wallet.28sshuU4BSZ2RCJyTHt2CS5yVeQ.balance`)
 
 ## TODO
 
-- Find out why SQLite falls over (and doesn't recover) when you pummel the writer
-    - Okay, it's because I had the `sqlite3` shell loops running- need to work out how to get the server to recover though (basically one
-      instance of the database being busy locks it for good until manually recovered)
-- Add /healthz endpoint for all services
+-   Find out why SQLite falls over (and doesn't recover) when you pummel the writer
+    -   Okay, it's because I had the `sqlite3` shell loops running- need to work out how to get the server to recover though (basically one
+        instance of the database being busy locks it for good until manually recovered)
+-   Add /healthz endpoint for all services
 
 ## Prerequisites
 
-- Go 1.17+
-- Docker
-- Docker Compose
-- Redis CLI
-- cURL
-- jq
+-   Go 1.21+
+-   Docker
+-   Docker Compose
+-   Redis CLI
+-   cURL
+-   jq
 
 And optionally for the utilities / integration tests:
 
-- Python3.9+
-- Virtualenv
+-   Python3.9+
+-   Virtualenv
 
 ## Usage
 
 ### Pull and build
 
 ```shell
-./pull.sh && ./build.sh && ./run.sh
+./pull.sh && ./build.sh
 ```
 
 ### Run
@@ -119,11 +119,11 @@ curl -s -X POST -d '{"amount": 5}' http://localhost/wallet/28skwt5B8zTrs6AqBWrSg
 
 Observations in the other shell windows:
 
-- Redis is updated with state for readers to use
-- Event log contains all attempted transactions
-- State log contains the state after each transaction
-- Balance updates appropriately
-- Transactions update appropriately
+-   Redis is updated with state for readers to use
+-   Event log contains all attempted transactions
+-   State log contains the state after each transaction
+-   Balance updates appropriately
+-   Transactions update appropriately
 
 If you really wanna pummel the system, set yourself up with a Virtualenv, install `requirements.txt` and try the following:
 
@@ -147,45 +147,45 @@ Not sure where the bottleneck is- no single container is working particularly ha
 
 #### Service breakdown
 
-- `message_broker` = NATS for pub/sub glue
-- `cache` = Redis for caching read state
-- `history_writer_datastore` = SQLite for storing global event logs
-- `history_writer_service` = Go code to record global write events
-- `wallet_writer_datastore` = SQLite for storing event logs and state logs
-- `wallet_writer_service` = Go code to handle write events
-- `wallet_server_service` = Go code to expose read state
+-   `message_broker` = NATS for pub/sub glue
+-   `cache` = Redis for caching read state
+-   `history_writer_datastore` = SQLite for storing global event logs
+-   `history_writer_service` = Go code to record global write events
+-   `wallet_writer_datastore` = SQLite for storing event logs and state logs
+-   `wallet_writer_service` = Go code to handle write events
+-   `wallet_server_service` = Go code to expose read state
 
 #### Overview
 
-- `wallet_server_service` is really just a convenience abstraction to expose the reader and writer via HTTP
-- All reads ultimately happen against Redis
-- All writes are handled by `wallet_writer_service`, which ensures to:
-    - Record write events in the event log
-    - Interact with the write model
-    - Write the full state to the read model (Redis)
+-   `wallet_server_service` is really just a convenience abstraction to expose the reader and writer via HTTP
+-   All reads ultimately happen against Redis
+-   All writes are handled by `wallet_writer_service`, which ensures to:
+    -   Record write events in the event log
+    -   Interact with the write model
+    -   Write the full state to the read model (Redis)
 
 #### Breakdown
 
 #### Read `balance` (or `transaction`) endpoints
 
-- `wallet_server_service` handles `http://localhost/wallet/28skwt5B8zTrs6AqBWrSgCHLcRL/balance`
-- The `Reader` abstraction has `GetBalance` called
-- `GetBalance` extracts `Balance` from `GetWalletState`
-- `GetWalletState` invokes `GetState`
-- `GetState` attempts to get JSON from Redis
-    - NOTE: We leave the `wallet_server_service` process by interacting with Redis
-- Data flows back up and out to the requester (if available)
+-   `wallet_server_service` handles `http://localhost/wallet/28skwt5B8zTrs6AqBWrSgCHLcRL/balance`
+-   The `Reader` abstraction has `GetBalance` called
+-   `GetBalance` extracts `Balance` from `GetWalletState`
+-   `GetWalletState` invokes `GetState`
+-   `GetState` attempts to get JSON from Redis
+    -   NOTE: We leave the `wallet_server_service` process by interacting with Redis
+-   Data flows back up and out to the requester (if available)
 
 #### Write `credit` (or `debit`) events
 
-- `wallet_server_service` handles `http://localhost/wallet/28skwt5B8zTrs6AqBWrSgCHLcRL/credit`
-- The `Caller` abstraction has `Credit` called
-- `Credit` invokes `Call`
-- `Call` creates an event and attempts a NATS `Request` (RPC) with it
-    - NOTE: We leave the `wallet_server_service` process by interacting with NATS
-- `wallet_writer_service` handles the event in the NATS `Request` with the `Writer` abstraction
-- The `Writer` abstraction use `handle` to record the event in the event log and pass it up to the domain implementation
-- The domain implementation invokes the appropriate method against the `Wallet` abstraction
-- The `Wallet` abstraction accepts or rejects the method call, possibly mutating it's state
-- The domain implementation extracts the `Wallet` abstractions state and updates Redis with it
-    - NOTE: At this point, a reader will see the state affected by the recently written event 
+-   `wallet_server_service` handles `http://localhost/wallet/28skwt5B8zTrs6AqBWrSgCHLcRL/credit`
+-   The `Caller` abstraction has `Credit` called
+-   `Credit` invokes `Call`
+-   `Call` creates an event and attempts a NATS `Request` (RPC) with it
+    -   NOTE: We leave the `wallet_server_service` process by interacting with NATS
+-   `wallet_writer_service` handles the event in the NATS `Request` with the `Writer` abstraction
+-   The `Writer` abstraction use `handle` to record the event in the event log and pass it up to the domain implementation
+-   The domain implementation invokes the appropriate method against the `Wallet` abstraction
+-   The `Wallet` abstraction accepts or rejects the method call, possibly mutating it's state
+-   The domain implementation extracts the `Wallet` abstractions state and updates Redis with it
+    -   NOTE: At this point, a reader will see the state affected by the recently written event

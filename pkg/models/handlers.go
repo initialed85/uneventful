@@ -2,8 +2,9 @@ package models
 
 import (
 	"fmt"
-	"github.com/segmentio/ksuid"
 	"sync"
+
+	"github.com/segmentio/ksuid"
 )
 
 type Handler func(ksuid.KSUID, interface{}) (interface{}, error)

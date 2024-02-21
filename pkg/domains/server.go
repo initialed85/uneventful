@@ -3,12 +3,13 @@ package domains
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/initialed85/uneventful/pkg/lifecycles"
 	"github.com/initialed85/uneventful/pkg/models"
 	"github.com/initialed85/uneventful/pkg/workers/http_worker"
 	"github.com/segmentio/ksuid"
-	"io/ioutil"
-	"net/http"
 )
 
 type Server interface {

@@ -2,11 +2,12 @@ package helpers
 
 import (
 	"fmt"
-	"github.com/segmentio/ksuid"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+
+	"github.com/segmentio/ksuid"
 )
 
 func GetEnvironmentVariable(key string, required bool, defaultValue string) (string, error) {
@@ -22,7 +23,7 @@ func GetEnvironmentVariable(key string, required bool, defaultValue string) (str
 }
 
 func WaitForSigInt() {
-	c := make(chan os.Signal)
+	c := make(chan os.Signal, 16)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT)
 	<-c
 }

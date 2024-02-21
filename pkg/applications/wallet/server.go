@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"fmt"
+
 	"github.com/initialed85/uneventful/pkg/domains"
 	"github.com/segmentio/ksuid"
 )

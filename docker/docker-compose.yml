@@ -64,8 +64,8 @@ services:
     depends_on:
       # history_writer_datastore:
       #   condition: service_healthy
-      message_broker:
-        condition: service_healthy
+      # message_broker:
+      #   condition: service_healthy
       cache:
         condition: service_healthy
 
@@ -102,8 +102,8 @@ services:
     depends_on:
       # wallet_writer_datastore:
       #   condition: service_healthy
-      message_broker:
-        condition: service_healthy
+      # message_broker:
+      #   condition: service_healthy
       cache:
         condition: service_healthy
 

@@ -4,6 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/initialed85/uneventful/pkg/lifecycles"
 	"github.com/initialed85/uneventful/pkg/models/calls"
 	"github.com/initialed85/uneventful/pkg/models/events"
@@ -13,10 +18,6 @@ import (
 	"github.com/initialed85/uneventful/pkg/workers/redis_worker"
 	"github.com/nats-io/nats.go"
 	"github.com/segmentio/ksuid"
-	"log"
-	"strings"
-	"sync"
-	"time"
 )
 
 type Writer interface {
@@ -358,11 +359,6 @@ func (w *WriterImplementation) handler(msg *nats.Msg) {
 }
 
 func (w *WriterImplementation) SetState(data json.RawMessage) (err error) {
-	db, err := w.databaseWorker.GetDB()
-	if err != nil {
-		return err
-	}
-
 	redisClient, err := w.redisWorker.GetRedisClient()
 	if err != nil {
 		return err
@@ -375,26 +371,9 @@ func (w *WriterImplementation) SetState(data json.RawMessage) (err error) {
 		return err
 	}
 
-	databaseState, err := state.ToDatabaseState()
-	if err != nil {
-		return err
-	}
-
-	w.dbMu.Lock()
-	_, err = databaseState.Create(db)
-	w.dbMu.Unlock()
-	if err != nil {
-		return err
-	}
-
-	log.Printf("%v - wrote %v to %v", w.name, string(stateJSON), w.name)
-
 	err = redisClient.Set(context.Background(), w.name, stateJSON, time.Duration(0)).Err()
 	if err != nil {
-		w.dbMu.Lock()
-		_, deleteErr := databaseState.Delete(db)
-		w.dbMu.Unlock()
-		return fmt.Errorf("redis client caused %v required state deletion which caused %v", err, deleteErr)
+		return err
 	}
 
 	return nil

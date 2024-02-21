@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"encoding/json"
+
 	"github.com/initialed85/uneventful/pkg/models"
 	"github.com/segmentio/ksuid"
 )

@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"fmt"
+
 	"github.com/initialed85/uneventful/pkg/lifecycles"
 	"github.com/initialed85/uneventful/pkg/models/states"
 	"github.com/initialed85/uneventful/pkg/workers/redis_worker"

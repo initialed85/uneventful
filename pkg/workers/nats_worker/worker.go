@@ -2,6 +2,7 @@ package nats_worker
 
 import (
 	"fmt"
+
 	"github.com/initialed85/uneventful/internal/helpers"
 	"github.com/initialed85/uneventful/pkg/lifecycles"
 	"github.com/nats-io/nats.go"

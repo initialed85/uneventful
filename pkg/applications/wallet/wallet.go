@@ -2,9 +2,10 @@ package wallet
 
 import (
 	"fmt"
-	"github.com/segmentio/ksuid"
 	"sync"
 	"time"
+
+	"github.com/segmentio/ksuid"
 )
 
 type Wallet struct {

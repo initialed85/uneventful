@@ -2,6 +2,7 @@ package redis_worker
 
 import (
 	"fmt"
+
 	"github.com/go-redis/redis/v8"
 	"github.com/initialed85/uneventful/internal/helpers"
 	"github.com/initialed85/uneventful/pkg/lifecycles"

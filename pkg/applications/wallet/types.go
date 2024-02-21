@@ -2,9 +2,10 @@ package wallet
 
 import (
 	"encoding/json"
+	"time"
+
 	"github.com/initialed85/uneventful/internal/helpers"
 	"github.com/segmentio/ksuid"
-	"time"
 )
 
 type Transaction struct {

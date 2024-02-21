@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/segmentio/ksuid"
 	"log"
+
+	"github.com/segmentio/ksuid"
 )
 
 func main() {

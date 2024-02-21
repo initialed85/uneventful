@@ -2,13 +2,13 @@ package models
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/initialed85/uneventful/pkg/lifecycles"
 	"github.com/initialed85/uneventful/pkg/models/calls"
 	"github.com/initialed85/uneventful/pkg/models/events"
 	"github.com/initialed85/uneventful/pkg/workers/nats_worker"
 	"github.com/segmentio/ksuid"
-	"log"
-	"time"
 )
 
 type Caller interface {
@@ -69,9 +69,7 @@ func (c *CallerImplementation) Call(name string, entityID ksuid.KSUID, endpoint 
 		return err
 	}
 
-	log.Printf("%v - calling %#+v", c.name, address)
-
-	msg, err := natsConn.Request(fmt.Sprintf("event.%v", address), eventJSON, time.Second*1)
+	msg, err := natsConn.Request(fmt.Sprintf("event.%v", address), eventJSON, time.Second*5)
 	if err != nil {
 		return err
 	}

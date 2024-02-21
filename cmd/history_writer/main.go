@@ -1,10 +1,11 @@
 package main
 
 import (
+	"log"
+
 	"github.com/initialed85/uneventful/internal/helpers"
 	"github.com/initialed85/uneventful/pkg/applications/history"
 	"github.com/initialed85/uneventful/pkg/lifecycles"
-	"log"
 )
 
 func main() {

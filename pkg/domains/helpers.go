@@ -1,9 +1,10 @@
 package domains
 
 import (
-	"github.com/initialed85/uneventful/pkg/workers/http_worker"
 	"log"
 	"net/http"
+
+	"github.com/initialed85/uneventful/pkg/workers/http_worker"
 )
 
 func handledErrorResponse(innerErr error, outerErr error, responseWriter http.ResponseWriter, request *http.Request, statusCode int, server Server) bool {

@@ -2,6 +2,7 @@ package database_worker
 
 import (
 	"fmt"
+
 	"github.com/initialed85/uneventful/internal/helpers"
 	"github.com/initialed85/uneventful/pkg/lifecycles"
 	"gorm.io/gorm"

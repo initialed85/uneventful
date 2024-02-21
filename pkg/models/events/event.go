@@ -3,10 +3,11 @@ package events
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/initialed85/uneventful/internal/helpers"
 	"github.com/jackc/pgtype"
 	"github.com/segmentio/ksuid"
-	"time"
 )
 
 type Event struct {

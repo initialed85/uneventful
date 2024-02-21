@@ -1,4 +1,4 @@
-FROM golang:1.18 AS builder
+FROM golang:1.21 AS builder
 
 ARG CMD_NAME
 
@@ -14,7 +14,7 @@ COPY pkg /srv/pkg
 
 RUN --mount=type=cache,target=/root/.cache/go-build go build -v -o entrypoint /srv/cmd/${CMD_NAME}/main.go
 
-FROM golang:1.18 AS runner
+FROM golang:1.21 AS runner
 
 RUN apt-get update && apt-get install -y sqlite3
 

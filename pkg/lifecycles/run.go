@@ -1,8 +1,9 @@
 package lifecycles
 
 import (
-	"github.com/initialed85/uneventful/internal/helpers"
 	"log"
+
+	"github.com/initialed85/uneventful/internal/helpers"
 )
 
 func Run(worker Worker) {

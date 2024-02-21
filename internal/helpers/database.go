@@ -2,11 +2,12 @@ package helpers
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/glebarez/sqlite"
 	"github.com/initialed85/uneventful/internal/constants"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 )
 
 func GetDatabase() (db *gorm.DB, err error) {
