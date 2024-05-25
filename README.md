@@ -1,5 +1,7 @@
 # uneventful
 
+# status: working but not very useful
+
 Not sure yet.
 
 ## What is it?
